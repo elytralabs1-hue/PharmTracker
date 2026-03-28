@@ -117,60 +117,121 @@ function isEODDay(startDate, checkDate) {
     return diffDays >= 0 && diffDays % 2 === 0;
 }
 
-// ==================== DATA STORE ====================
+// ==================== FIREBASE INIT ====================
+firebase.initializeApp({
+    apiKey: "AIzaSyBhy12Fk4bAadAP-QSDAsg1Ptp2xvZxh7w",
+    authDomain: "pharmtracker-a2393.firebaseapp.com",
+    projectId: "pharmtracker-a2393",
+    storageBucket: "pharmtracker-a2393.firebasestorage.app",
+    messagingSenderId: "740839310914",
+    appId: "1:740839310914:web:98752ca45b7b56b9374fdb"
+});
+const db = firebase.firestore();
+
+// ==================== DATA STORE (Firebase + Local Cache) ====================
 const PharmStore = {
-    // Users
-    getUsers() {
-        return JSON.parse(localStorage.getItem('pharmtracker_users') || '[]');
-    },
-    saveUsers(users) {
+    // Local cache
+    _users: [],
+    _userData: {},
+    _activeUserId: null,
+    _ready: false,
+
+    // Load everything from Firestore on startup
+    async loadFromFirebase() {
         try {
-            localStorage.setItem('pharmtracker_users', JSON.stringify(users));
-        } catch (e) {
-            showToast('Storage full! Export your data as a backup.', 'error');
+            // Load users
+            const usersSnap = await db.collection('users').orderBy('createdAt').get();
+            this._users = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            // Load all user data
+            const dataSnap = await db.collection('userData').get();
+            this._userData = {};
+            dataSnap.docs.forEach(doc => {
+                this._userData[doc.id] = doc.data();
+            });
+
+            // Active user from localStorage (device-specific preference)
+            this._activeUserId = localStorage.getItem('pharmtracker_activeUser');
+
+            this._ready = true;
+            return true;
+        } catch (err) {
+            console.error('Firebase load error:', err);
+            // Fallback to localStorage
+            this._users = JSON.parse(localStorage.getItem('pharmtracker_users') || '[]');
+            this._activeUserId = localStorage.getItem('pharmtracker_activeUser');
+            this._users.forEach(u => {
+                this._userData[u.id] = JSON.parse(localStorage.getItem(`pharmtracker_data_${u.id}`) || '{}');
+            });
+            this._ready = true;
+            return false;
         }
     },
+
+    // Sync helpers
+    _syncUsers() {
+        // Write each user as its own doc
+        this._users.forEach(u => {
+            const { id, ...data } = u;
+            db.collection('users').doc(id).set(data).catch(e => console.error('Sync user error:', e));
+        });
+        // Also keep localStorage as fallback
+        localStorage.setItem('pharmtracker_users', JSON.stringify(this._users));
+    },
+    _syncUserData(userId) {
+        const id = userId || this._activeUserId;
+        const data = this._userData[id] || {};
+        db.collection('userData').doc(id).set(data).catch(e => console.error('Sync data error:', e));
+        try { localStorage.setItem(`pharmtracker_data_${id}`, JSON.stringify(data)); } catch(e) {}
+    },
+
+    // Users
+    getUsers() {
+        return this._users;
+    },
+    saveUsers(users) {
+        this._users = users;
+        this._syncUsers();
+    },
     addUser(name) {
-        const users = this.getUsers();
         const user = { id: uuid(), name, createdAt: new Date().toISOString() };
-        users.push(user);
-        this.saveUsers(users);
-        // Init user data
-        this.saveUserData(user.id, { compounds: [], stack: [], events: [], dailyNotes: {}, settings: {} });
+        this._users.push(user);
+        this._userData[user.id] = { compounds: [], stack: [], events: [], dailyNotes: {}, settings: {} };
+        this._syncUsers();
+        this._syncUserData(user.id);
         return user;
     },
     deleteUser(userId) {
-        let users = this.getUsers();
-        users = users.filter(u => u.id !== userId);
-        this.saveUsers(users);
+        this._users = this._users.filter(u => u.id !== userId);
+        delete this._userData[userId];
+        this._syncUsers();
+        db.collection('users').doc(userId).delete().catch(() => {});
+        db.collection('userData').doc(userId).delete().catch(() => {});
         localStorage.removeItem(`pharmtracker_data_${userId}`);
     },
     renameUser(userId, newName) {
-        const users = this.getUsers();
-        const u = users.find(u => u.id === userId);
-        if (u) { u.name = newName; this.saveUsers(users); }
+        const u = this._users.find(u => u.id === userId);
+        if (u) { u.name = newName; this._syncUsers(); }
     },
 
-    // Active user
+    // Active user (device-specific)
     getActiveUserId() {
-        return localStorage.getItem('pharmtracker_activeUser');
+        return this._activeUserId;
     },
     setActiveUserId(id) {
+        this._activeUserId = id;
         localStorage.setItem('pharmtracker_activeUser', id);
     },
 
     // User data
     getUserData(userId) {
-        const id = userId || this.getActiveUserId();
-        return JSON.parse(localStorage.getItem(`pharmtracker_data_${id}`) || '{"compounds":[],"stack":[],"dailyNotes":{},"settings":{}}');
+        const id = userId || this._activeUserId;
+        return this._userData[id] || { compounds: [], stack: [], events: [], dailyNotes: {}, settings: {} };
     },
     saveUserData(userId, data) {
-        const id = userId || this.getActiveUserId();
-        try {
-            localStorage.setItem(`pharmtracker_data_${id}`, JSON.stringify(data));
-        } catch (e) {
-            showToast('Storage full! Export your data as a backup.', 'error');
-        }
+        const id = userId || this._activeUserId;
+        this._userData[id] = data;
+        this._syncUserData(id);
     },
 
     // Compounds
@@ -237,7 +298,6 @@ const PharmStore = {
             note: note || '',
             sideEffects: sideEffects || ''
         });
-        // Increment vial usage for peptides and PEDs
         if (compound.type === 'Peptides' || compound.type === 'PEDs') {
             compound.vialPinsUsed = (compound.vialPinsUsed || 0) + 1;
         }
@@ -319,10 +379,12 @@ const PharmStore = {
     importAll(jsonStr) {
         const data = JSON.parse(jsonStr);
         if (!data.users || !data.userData) throw new Error('Invalid data format');
-        this.saveUsers(data.users);
+        this._users = data.users;
+        this._syncUsers();
         if (data.activeUser) this.setActiveUserId(data.activeUser);
         Object.keys(data.userData).forEach(userId => {
-            this.saveUserData(userId, data.userData[userId]);
+            this._userData[userId] = data.userData[userId];
+            this._syncUserData(userId);
         });
     }
 };
@@ -1560,7 +1622,15 @@ function importData(file) {
 }
 
 // ==================== INITIALIZATION ====================
-function init() {
+async function init() {
+    // Load data from Firebase (falls back to localStorage)
+    const firebaseOk = await PharmStore.loadFromFirebase();
+    if (firebaseOk) {
+        console.log('✅ Connected to Firebase');
+    } else {
+        console.log('⚠️ Using localStorage fallback');
+    }
+
     // Check for existing users, create default if none
     const users = PharmStore.getUsers();
     if (users.length === 0) {
