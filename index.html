@@ -15,7 +15,23 @@
     <meta name="apple-mobile-web-app-title" content="PharmTracker">
 </head>
 <body>
-    <div id="app-container">
+    <!-- ========== PASSWORD GATE ========== -->
+    <div id="login-gate">
+        <div class="login-box">
+            <div class="login-logo">
+                <i class="fas fa-flask"></i>
+                <span>Pharm<span class="accent">Tracker</span></span>
+            </div>
+            <p class="login-subtitle">Enter password to continue</p>
+            <div class="login-form">
+                <input type="password" id="login-password" placeholder="Password" autofocus>
+                <button id="btn-login" class="btn-primary"><i class="fas fa-lock-open"></i> Enter</button>
+            </div>
+            <p id="login-error" class="login-error"></p>
+        </div>
+    </div>
+
+    <div id="app-container" style="display:none;">
         <!-- ========== SIDEBAR ========== -->
         <aside id="sidebar">
             <div class="sidebar-logo">

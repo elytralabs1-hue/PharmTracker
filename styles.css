@@ -115,6 +115,61 @@ body {
     background: var(--text-muted);
 }
 
+/* ========== LOGIN GATE ========== */
+#login-gate {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: var(--bg-primary);
+    padding: 20px;
+}
+.login-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 48px 40px;
+    text-align: center;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: var(--shadow-lg);
+}
+.login-logo {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 1.6rem;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.login-logo i {
+    color: var(--accent);
+    font-size: 1.4rem;
+}
+.login-subtitle {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 28px;
+}
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.login-form input {
+    text-align: center;
+    font-size: 1rem;
+    padding: 14px;
+}
+.login-error {
+    color: #f87171;
+    font-size: 0.8rem;
+    margin-top: 12px;
+    min-height: 1.2em;
+}
+
 /* ========== LAYOUT ========== */
 #app-container {
     display: grid;

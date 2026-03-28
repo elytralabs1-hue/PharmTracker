@@ -1824,5 +1824,47 @@ function initEventListeners() {
     });
 }
 
+// ==================== AUTH GATE ====================
+const PASS_HASH = '7fcea8e2154b35a328e96ab3bf259dcb8ce4d4a2ea9a6c24b179502d9fcaff46';
+
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function attemptLogin() {
+    const input = document.getElementById('login-password');
+    const error = document.getElementById('login-error');
+    const password = input.value;
+
+    if (!password) { error.textContent = 'Please enter a password'; return; }
+
+    const hash = await hashPassword(password);
+    if (hash === PASS_HASH) {
+        sessionStorage.setItem('pharmtracker_auth', 'true');
+        document.getElementById('login-gate').style.display = 'none';
+        document.getElementById('app-container').style.display = '';
+        init();
+    } else {
+        error.textContent = 'Incorrect password';
+        input.value = '';
+        input.focus();
+    }
+}
+
 // ==================== START ====================
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => {
+    if (sessionStorage.getItem('pharmtracker_auth') === 'true') {
+        document.getElementById('login-gate').style.display = 'none';
+        document.getElementById('app-container').style.display = '';
+        init();
+    } else {
+        document.getElementById('btn-login').addEventListener('click', attemptLogin);
+        document.getElementById('login-password').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') attemptLogin();
+        });
+    }
+});
