@@ -1,10 +1,10 @@
 const CACHE_NAME = 'pharmtracker-v1';
 const ASSETS = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/app.js',
-    '/manifest.json'
+    './',
+    './index.html',
+    './styles.css',
+    './app.js',
+    './manifest.json'
 ];
 
 // Install — cache core assets
