@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmTracker — Pharmacology Systems Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="styles.css?v=6">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#00d4aa">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PharmTracker">
+</head>
+<body>
+    <div id="app-container">
+        <!-- ========== SIDEBAR ========== -->
+        <aside id="sidebar">
+            <div class="sidebar-logo">
+                <i class="fas fa-flask"></i>
+                <span>Pharm<span class="accent">Tracker</span></span>
+            </div>
+
+            <div class="user-selector">
+                <label for="user-select">Active User</label>
+                <div class="user-select-row">
+                    <select id="user-select"></select>
+                    <button id="btn-add-user" class="btn-icon" title="Add User">
+                        <i class="fas fa-user-plus"></i>
+                    </button>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-view="dashboard">
+                    <i class="fas fa-th-large"></i><span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-view="library">
+                    <i class="fas fa-book-medical"></i><span>Compound Library</span>
+                </a>
+                <a href="#" class="nav-item" data-view="stack">
+                    <i class="fas fa-layer-group"></i><span>My Stack</span>
+                </a>
+                <a href="#" class="nav-item" data-view="calculator">
+                    <i class="fas fa-calculator"></i><span>Peptide Calculator</span>
+                </a>
+                <a href="#" class="nav-item" data-view="weekly">
+                    <i class="fas fa-calendar-week"></i><span>Weekly Schedule</span>
+                </a>
+                <a href="#" class="nav-item" data-view="daily">
+                    <i class="fas fa-calendar-day"></i><span>Daily Schedule</span>
+                </a>
+                <a href="#" class="nav-item" data-view="settings">
+                    <i class="fas fa-cog"></i><span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="btn-export" class="btn-sm btn-outline"><i class="fas fa-download"></i> Export</button>
+                <button id="btn-import" class="btn-sm btn-outline"><i class="fas fa-upload"></i> Import</button>
+                <input type="file" id="import-file" accept=".json" hidden>
+            </div>
+        </aside>
+
+        <!-- ========== MOBILE HEADER ========== -->
+        <div id="mobile-header">
+            <button id="hamburger" class="btn-icon"><i class="fas fa-bars"></i></button>
+            <div class="mobile-logo"><i class="fas fa-flask"></i> Pharm<span class="accent">Tracker</span></div>
+            <div class="mobile-actions">
+                <button id="mobile-search-toggle" class="btn-icon"><i class="fas fa-search"></i></button>
+            </div>
+        </div>
+        <div id="mobile-search-bar" style="display:none;">
+            <input type="text" id="mobile-search-input" placeholder="Search compounds...">
+            <button id="mobile-search-close" class="btn-icon"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="sidebar-overlay"></div>
+
+        <!-- ========== MAIN CONTENT ========== -->
+        <main id="main-content">
+            <!-- Top Bar -->
+            <header id="top-bar">
+                <div class="breadcrumb" id="breadcrumb">
+                    <i class="fas fa-th-large"></i> <span>Dashboard</span>
+                </div>
+                <div class="top-bar-right">
+                    <div class="search-bar">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="global-search" placeholder="Search compounds...">
+                    </div>
+                    <button id="btn-theme-toggle" class="btn-icon" title="Toggle Theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- ========== DASHBOARD VIEW ========== -->
+            <section class="view active" data-view="dashboard" id="view-dashboard">
+                <div class="stats-row" id="dashboard-stats">
+                    <!-- Filled by JS -->
+                </div>
+                <div class="dashboard-grid">
+                    <div class="card card-today">
+                        <div class="card-header">
+                            <h3><i class="fas fa-syringe"></i> Today's Schedule</h3>
+                            <span class="date-badge" id="today-date"></span>
+                        </div>
+                        <div class="card-body" id="today-schedule">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
+                    <div class="card card-upcoming">
+                        <div class="card-header">
+                            <h3><i class="fas fa-clock"></i> Upcoming (Next 3 Days)</h3>
+                        </div>
+                        <div class="card-body" id="upcoming-schedule">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
+                    <div class="card card-logs">
+                        <div class="card-header">
+                            <h3><i class="fas fa-clipboard-list"></i> Recent Logs</h3>
+                        </div>
+                        <div class="card-body" id="recent-logs">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
+                    <div class="card card-vials">
+                        <div class="card-header">
+                            <h3><i class="fas fa-vial"></i> Vial Status</h3>
+                        </div>
+                        <div class="card-body" id="vial-status">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== COMPOUND LIBRARY VIEW ========== -->
+            <section class="view" data-view="library" id="view-library">
+                <div class="view-toolbar">
+                    <div class="filter-group">
+                        <select id="library-filter-type">
+                            <option value="all">All Types</option>
+                            <option value="Peptides">Peptides</option>
+                            <option value="PEDs">PEDs</option>
+                            <option value="Supplements">Supplements</option>
+                            <option value="Ancillaries">Ancillaries</option>
+                            <option value="Nootropics">Nootropics</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <input type="text" id="library-search" placeholder="Filter compounds...">
+                    </div>
+                    <button id="btn-add-compound" class="btn-primary">
+                        <i class="fas fa-plus"></i> Add Compound
+                    </button>
+                </div>
+                <div class="compounds-grid" id="compounds-grid">
+                    <!-- Filled by JS -->
+                </div>
+            </section>
+
+            <!-- ========== MY STACK VIEW ========== -->
+            <section class="view" data-view="stack" id="view-stack">
+                <div class="view-toolbar">
+                    <h2>My Active Stack</h2>
+                    <div class="toolbar-actions">
+                        <button id="btn-add-to-stack" class="btn-primary">
+                            <i class="fas fa-plus"></i> Add from Library
+                        </button>
+                        <button id="btn-clear-stack" class="btn-outline btn-danger">
+                            <i class="fas fa-trash"></i> Clear Stack
+                        </button>
+                    </div>
+                </div>
+                <div class="stack-list" id="stack-list">
+                    <!-- Filled by JS -->
+                </div>
+            </section>
+
+            <!-- ========== PEPTIDE CALCULATOR VIEW ========== -->
+            <section class="view" data-view="calculator" id="view-calculator">
+                <div class="calculator-layout">
+                    <div class="card calc-input-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-calculator"></i> Peptide Reconstitution Calculator</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="calc-mg">Peptide Amount (mg per vial)</label>
+                                <input type="number" id="calc-mg" step="0.1" min="0" placeholder="e.g. 10">
+                            </div>
+                            <div class="form-group">
+                                <label for="calc-bac">BAC Water Added (mL)</label>
+                                <input type="number" id="calc-bac" step="0.1" min="0" placeholder="e.g. 2">
+                            </div>
+                            <div class="form-group">
+                                <label for="calc-dose">Desired Dose per Injection (mcg)</label>
+                                <input type="number" id="calc-dose" step="1" min="0" placeholder="e.g. 250">
+                            </div>
+                            <div class="form-group">
+                                <label for="calc-freq">Injections per Week</label>
+                                <input type="number" id="calc-freq" step="1" min="1" max="14" placeholder="e.g. 5">
+                            </div>
+                            <div class="form-group">
+                                <label>Schedule Type</label>
+                                <div class="radio-group">
+                                    <label class="radio-label"><input type="radio" name="calc-schedule" value="everyday" checked> Everyday</label>
+                                    <label class="radio-label"><input type="radio" name="calc-schedule" value="eod"> EOD</label>
+                                    <label class="radio-label"><input type="radio" name="calc-schedule" value="specific"> Specific Days</label>
+                                </div>
+                            </div>
+                            <div class="form-group" id="specific-days-group" style="display:none;">
+                                <label>Select Days</label>
+                                <div class="day-toggles">
+                                    <button class="day-toggle" data-day="1">Mon</button>
+                                    <button class="day-toggle" data-day="2">Tue</button>
+                                    <button class="day-toggle" data-day="3">Wed</button>
+                                    <button class="day-toggle" data-day="4">Thu</button>
+                                    <button class="day-toggle" data-day="5">Fri</button>
+                                    <button class="day-toggle" data-day="6">Sat</button>
+                                    <button class="day-toggle" data-day="0">Sun</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="calc-compound-name">Compound Name (for saving)</label>
+                                <input type="text" id="calc-compound-name" placeholder="e.g. BPC-157">
+                            </div>
+                            <div class="form-group">
+                                <label for="calc-time">Preferred Time of Day</label>
+                                <input type="time" id="calc-time" value="08:00">
+                            </div>
+                            <button id="btn-save-from-calc" class="btn-primary btn-block">
+                                <i class="fas fa-save"></i> Save to Stack
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card calc-results-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-chart-bar"></i> Calculated Results</h3>
+                        </div>
+                        <div class="card-body" id="calc-results">
+                            <div class="result-item">
+                                <span class="result-label">Concentration</span>
+                                <span class="result-value" id="res-concentration">—</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Volume to Draw</span>
+                                <span class="result-value" id="res-volume">—</span>
+                            </div>
+                            <div class="result-item highlight">
+                                <span class="result-label">Units on Syringe</span>
+                                <span class="result-value" id="res-units">—</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Weekly Usage</span>
+                                <span class="result-value" id="res-weekly">—</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Pins per Vial</span>
+                                <span class="result-value" id="res-pins">—</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Weeks per Vial</span>
+                                <span class="result-value" id="res-weeks">—</span>
+                            </div>
+                            <div class="result-schedule" id="res-schedule-preview">
+                                <!-- Day-by-day preview -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== WEEKLY SCHEDULE VIEW ========== -->
+            <section class="view" data-view="weekly" id="view-weekly">
+                <div class="view-toolbar">
+                    <h2><i class="fas fa-calendar-week"></i> Weekly Schedule</h2>
+                    <div class="toolbar-actions">
+                        <button class="btn-outline btn-sm btn-add-event" onclick="openAddEvent()"><i class="fas fa-plus"></i> Add Event</button>
+                        <div class="week-nav">
+                            <button id="week-prev" class="btn-icon"><i class="fas fa-chevron-left"></i></button>
+                            <span id="week-label">This Week</span>
+                            <button id="week-next" class="btn-icon"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="weekly-grid" id="weekly-grid">
+                    <!-- 7 columns filled by JS -->
+                </div>
+            </section>
+
+            <!-- ========== DAILY SCHEDULE VIEW ========== -->
+            <section class="view" data-view="daily" id="view-daily">
+                <div class="view-toolbar">
+                    <h2><i class="fas fa-calendar-day"></i> Daily Schedule</h2>
+                    <div class="toolbar-actions">
+                        <button class="btn-outline btn-sm btn-add-event" onclick="openAddEvent()"><i class="fas fa-plus"></i> Add Event</button>
+                        <div class="day-nav">
+                            <button id="day-prev" class="btn-icon"><i class="fas fa-chevron-left"></i></button>
+                            <input type="date" id="daily-date-picker">
+                            <button id="day-next" class="btn-icon"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="daily-timeline" id="daily-timeline">
+                    <!-- Time blocks filled by JS -->
+                </div>
+                <div class="card daily-notes-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-sticky-note"></i> Daily Notes & Events</h3>
+                    </div>
+                    <div class="card-body">
+                        <textarea id="daily-events" placeholder="Fasted AM cardio, blood work, rest day..." rows="2"></textarea>
+                        <textarea id="daily-notes" placeholder="How are you feeling today? Energy, mood, side effects..." rows="3"></textarea>
+                        <button id="btn-save-daily-notes" class="btn-primary btn-sm">
+                            <i class="fas fa-save"></i> Save Notes
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== SETTINGS VIEW ========== -->
+            <section class="view" data-view="settings" id="view-settings">
+                <div class="settings-grid">
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fas fa-user-cog"></i> User Management</h3></div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="settings-username">Display Name</label>
+                                <input type="text" id="settings-username" placeholder="Your name">
+                            </div>
+                            <button id="btn-save-username" class="btn-primary btn-sm"><i class="fas fa-save"></i> Save Name</button>
+                            <hr>
+                            <button id="btn-delete-user" class="btn-outline btn-danger btn-sm"><i class="fas fa-user-times"></i> Delete This User</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fas fa-database"></i> Data Management</h3></div>
+                        <div class="card-body">
+                            <p class="text-muted">Export your data as a JSON backup or import from a previous export.</p>
+                            <div id="settings-data-stats"></div>
+                            <div class="btn-row">
+                                <button id="btn-export-settings" class="btn-primary btn-sm"><i class="fas fa-download"></i> Export All Data</button>
+                                <button id="btn-import-settings" class="btn-outline btn-sm"><i class="fas fa-upload"></i> Import Data</button>
+                            </div>
+                            <input type="file" id="import-file-settings" accept=".json" hidden>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fas fa-palette"></i> Appearance</h3></div>
+                        <div class="card-body">
+                            <div class="toggle-row">
+                                <span>Dark Mode</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="dark-mode-toggle" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3><i class="fas fa-info-circle"></i> About</h3></div>
+                        <div class="card-body">
+                            <p class="text-muted">PharmTracker v1.0</p>
+                            <p class="text-muted">Pharmacology Systems Tracker — Track all your peptides, PEDs, supplements, ancillaries, nootropics, and more in one place.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ========== MODALS ========== -->
+    <div id="modal-overlay" class="modal-overlay">
+        <!-- Add User Modal -->
+        <div class="modal" id="modal-add-user">
+            <div class="modal-header">
+                <h3>Add New User</h3>
+                <button class="modal-close btn-icon"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="new-user-name">Name</label>
+                    <input type="text" id="new-user-name" placeholder="Enter name..." autofocus>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline modal-cancel">Cancel</button>
+                <button class="btn-primary" id="btn-confirm-add-user"><i class="fas fa-plus"></i> Add User</button>
+            </div>
+        </div>
+
+        <!-- Add/Edit Compound Modal -->
+        <div class="modal modal-lg" id="modal-add-compound">
+            <div class="modal-header">
+                <h3 id="compound-modal-title">Add Compound</h3>
+                <button class="modal-close btn-icon"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="compound-name">Compound Name *</label>
+                        <input type="text" id="compound-name" placeholder="e.g. BPC-157" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="compound-type">Type *</label>
+                        <select id="compound-type">
+                            <option value="Peptides">Peptide</option>
+                            <option value="PEDs">PED</option>
+                            <option value="Supplements">Supplement</option>
+                            <option value="Ancillaries">Ancillary</option>
+                            <option value="Nootropics">Nootropic</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Peptide-specific fields -->
+                <div id="peptide-fields">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="compound-mg">Peptide Amount (mg/vial)</label>
+                            <input type="number" id="compound-mg" step="0.1" min="0" placeholder="10">
+                        </div>
+                        <div class="form-group">
+                            <label for="compound-bac">BAC Water (mL)</label>
+                            <input type="number" id="compound-bac" step="0.1" min="0" placeholder="2">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="compound-dose-mcg">Dose per Injection (mcg)</label>
+                            <input type="number" id="compound-dose-mcg" step="1" min="0" placeholder="250">
+                        </div>
+                        <div class="form-group">
+                            <label for="compound-inj-week">Injections/Week</label>
+                            <input type="number" id="compound-inj-week" step="1" min="1" max="14" placeholder="5">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Schedule Type</label>
+                        <div class="radio-group">
+                            <label class="radio-label"><input type="radio" name="compound-schedule" value="everyday" checked> Everyday</label>
+                            <label class="radio-label"><input type="radio" name="compound-schedule" value="eod"> EOD</label>
+                            <label class="radio-label"><input type="radio" name="compound-schedule" value="specific"> Specific Days</label>
+                        </div>
+                    </div>
+                    <div class="form-group" id="compound-specific-days" style="display:none;">
+                        <label>Select Days</label>
+                        <div class="day-toggles">
+                            <button type="button" class="day-toggle" data-day="1">Mon</button>
+                            <button type="button" class="day-toggle" data-day="2">Tue</button>
+                            <button type="button" class="day-toggle" data-day="3">Wed</button>
+                            <button type="button" class="day-toggle" data-day="4">Thu</button>
+                            <button type="button" class="day-toggle" data-day="5">Fri</button>
+                            <button type="button" class="day-toggle" data-day="6">Sat</button>
+                            <button type="button" class="day-toggle" data-day="0">Sun</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PED-specific fields -->
+                <div id="ped-fields" style="display:none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="compound-ped-concentration">Concentration (mg/mL)</label>
+                            <input type="number" id="compound-ped-concentration" step="1" min="0" placeholder="e.g. 250">
+                        </div>
+                        <div class="form-group">
+                            <label for="compound-ped-vial-ml">Vial Size (mL)</label>
+                            <input type="number" id="compound-ped-vial-ml" step="0.1" min="0" placeholder="e.g. 10">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="compound-ped-dose-mg">Dose per Injection (mg)</label>
+                            <input type="number" id="compound-ped-dose-mg" step="1" min="0" placeholder="e.g. 125">
+                        </div>
+                        <div class="form-group">
+                            <label for="compound-ped-inj-week">Injections/Week</label>
+                            <input type="number" id="compound-ped-inj-week" step="1" min="1" max="14" placeholder="e.g. 2">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Schedule Type</label>
+                        <div class="radio-group">
+                            <label class="radio-label"><input type="radio" name="ped-schedule" value="everyday"> Everyday</label>
+                            <label class="radio-label"><input type="radio" name="ped-schedule" value="eod"> EOD</label>
+                            <label class="radio-label"><input type="radio" name="ped-schedule" value="specific" checked> Specific Days</label>
+                        </div>
+                    </div>
+                    <div class="form-group" id="ped-specific-days">
+                        <label>Select Days</label>
+                        <div class="day-toggles">
+                            <button type="button" class="day-toggle" data-day="1">Mon</button>
+                            <button type="button" class="day-toggle" data-day="2">Tue</button>
+                            <button type="button" class="day-toggle" data-day="3">Wed</button>
+                            <button type="button" class="day-toggle" data-day="4">Thu</button>
+                            <button type="button" class="day-toggle" data-day="5">Fri</button>
+                            <button type="button" class="day-toggle" data-day="6">Sat</button>
+                            <button type="button" class="day-toggle" data-day="0">Sun</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Non-peptide/non-PED fields -->
+                <div id="non-peptide-fields" style="display:none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="compound-dosage">Dosage</label>
+                            <input type="text" id="compound-dosage" placeholder="e.g. 500mg">
+                        </div>
+                        <div class="form-group">
+                            <label for="compound-frequency">Frequency</label>
+                            <select id="compound-frequency">
+                                <option value="daily">Daily</option>
+                                <option value="twice_daily">Twice Daily</option>
+                                <option value="eod">Every Other Day</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="specific">Specific Days</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" id="non-peptide-specific-days" style="display:none;">
+                        <label>Select Days</label>
+                        <div class="day-toggles">
+                            <button type="button" class="day-toggle" data-day="1">Mon</button>
+                            <button type="button" class="day-toggle" data-day="2">Tue</button>
+                            <button type="button" class="day-toggle" data-day="3">Wed</button>
+                            <button type="button" class="day-toggle" data-day="4">Thu</button>
+                            <button type="button" class="day-toggle" data-day="5">Fri</button>
+                            <button type="button" class="day-toggle" data-day="6">Sat</button>
+                            <button type="button" class="day-toggle" data-day="0">Sun</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Common fields -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="compound-time">Time of Day</label>
+                        <input type="time" id="compound-time" value="08:00">
+                    </div>
+                    <div class="form-group">
+                        <label for="compound-halflife">Half-Life</label>
+                        <input type="text" id="compound-halflife" placeholder="e.g. 4 hours">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="compound-cost">Cost per Unit ($)</label>
+                        <input type="number" id="compound-cost" step="0.01" min="0" placeholder="30.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="compound-source">Source / Brand</label>
+                        <input type="text" id="compound-source" placeholder="Optional">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="compound-notes">Notes</label>
+                    <textarea id="compound-notes" rows="2" placeholder="Any additional notes..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline modal-cancel">Cancel</button>
+                <button class="btn-primary" id="btn-save-compound"><i class="fas fa-save"></i> Save Compound</button>
+            </div>
+        </div>
+
+        <!-- Log Entry Modal -->
+        <div class="modal" id="modal-log-entry">
+            <div class="modal-header">
+                <h3>Log Dose</h3>
+                <button class="modal-close btn-icon"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <p id="log-compound-name" class="text-lg"></p>
+                <div class="form-group">
+                    <label for="log-note">How are you feeling?</label>
+                    <textarea id="log-note" rows="2" placeholder="Energy, mood, pumps..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="log-side-effects">Side Effects (if any)</label>
+                    <textarea id="log-side-effects" rows="2" placeholder="None, slight headache..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline modal-cancel">Cancel</button>
+                <button class="btn-primary" id="btn-confirm-log"><i class="fas fa-check"></i> Log Dose</button>
+            </div>
+        </div>
+
+        <!-- Add to Stack Modal (Pick from Library) -->
+        <div class="modal" id="modal-pick-compound">
+            <div class="modal-header">
+                <h3>Add to Stack</h3>
+                <button class="modal-close btn-icon"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="pick-search" placeholder="Search compounds...">
+                <div class="pick-list" id="pick-list">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Event Modal -->
+        <div class="modal" id="modal-add-event">
+            <div class="modal-header">
+                <h3 id="event-modal-title">Add Event</h3>
+                <button class="modal-close btn-icon"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group" style="flex:2;">
+                        <label for="event-name">Event Name *</label>
+                        <input type="text" id="event-name" placeholder="e.g. Lift, Cardio, Blood Work">
+                    </div>
+                    <div class="form-group" style="flex:0 0 80px;">
+                        <label for="event-emoji">Emoji</label>
+                        <input type="text" id="event-emoji" placeholder="🏋️" maxlength="4" style="text-align:center; font-size:1.2rem;">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="event-time">Start Time</label>
+                        <input type="time" id="event-time" value="06:00">
+                    </div>
+                    <div class="form-group">
+                        <label for="event-end-time">End Time <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label>
+                        <input type="time" id="event-end-time">
+                    </div>
+                    <div class="form-group" style="flex:0 0 70px;">
+                        <label for="event-color">Color</label>
+                        <input type="color" id="event-color" value="#00d4aa">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Schedule Type</label>
+                    <div class="radio-group">
+                        <label class="radio-label"><input type="radio" name="event-schedule" value="everyday"> Everyday</label>
+                        <label class="radio-label"><input type="radio" name="event-schedule" value="eod"> EOD</label>
+                        <label class="radio-label"><input type="radio" name="event-schedule" value="specific" checked> Specific Days</label>
+                    </div>
+                </div>
+                <div class="form-group" id="event-specific-days">
+                    <label>Select Days</label>
+                    <div class="day-toggles">
+                        <button type="button" class="day-toggle" data-day="1">Mon</button>
+                        <button type="button" class="day-toggle" data-day="2">Tue</button>
+                        <button type="button" class="day-toggle" data-day="3">Wed</button>
+                        <button type="button" class="day-toggle" data-day="4">Thu</button>
+                        <button type="button" class="day-toggle" data-day="5">Fri</button>
+                        <button type="button" class="day-toggle" data-day="6">Sat</button>
+                        <button type="button" class="day-toggle" data-day="0">Sun</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="event-notes">Notes</label>
+                    <textarea id="event-notes" rows="2" placeholder="Optional notes..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline btn-danger" id="btn-delete-event" style="display:none; margin-right:auto;"><i class="fas fa-trash"></i> Delete</button>
+                <button class="btn-outline modal-cancel">Cancel</button>
+                <button class="btn-primary" id="btn-save-event"><i class="fas fa-check"></i> Save Event</button>
+            </div>
+        </div>
+
+        <!-- Confirm Modal -->
+        <div class="modal modal-sm" id="modal-confirm">
+            <div class="modal-header">
+                <h3>Confirm</h3>
+                <button class="modal-close btn-icon"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline modal-cancel">Cancel</button>
+                <button class="btn-primary btn-danger" id="btn-confirm-action"><i class="fas fa-check"></i> Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-container"></div>
+
+    <script src="app.js?v=6"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
+    </script>
+</body>
+</html>
